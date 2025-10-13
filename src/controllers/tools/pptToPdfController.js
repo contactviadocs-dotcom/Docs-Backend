@@ -29,12 +29,12 @@ export const convertPptToPdf = async (req, res) => {
         }
 
         // Build correct download URL
-        const downloadUrl = `https://doc-backend-h9aw.onrender.com//api/tools/ppt-to-pdf/download/${recentPdf}`;
+        const downloadUrl = `https://docs-backend-r71d.onrender.com//api/tools/ppt-to-pdf/download/${recentPdf}`;
         return res.json({ success: true, pdfUrl: downloadUrl });
       }
 
       // ✅ Send PDF URL for download
-      const pdfUrl = `https://doc-backend-h9aw.onrender.com//api/tools/ppt-to-pdf/download/${outputFileName}`;
+      const pdfUrl = `https://docs-backend-r71d.onrender.com//api/tools/ppt-to-pdf/download/${outputFileName}`;
       res.json({ success: true, pdfUrl });
     });
   } catch (err) {

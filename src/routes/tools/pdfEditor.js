@@ -24,12 +24,12 @@ router.post("/", upload.single("pdf"), (req, res) => {
     if (output.endsWith(".zip")) {
       return res.json({
         message: "PDF converted successfully (multiple pages)",
-        zipUrl: `https://doc-backend-h9aw.onrender.com//${output}`,
+        zipUrl: `https://docs-backend-r71d.onrender.com//${output}`,
       });
     } else if (output.endsWith(".png")) {
       return res.json({
         message: "PDF converted successfully",
-        imageUrl: `https://doc-backend-h9aw.onrender.com//${output}`,
+        imageUrl: `https://docs-backend-r71d.onrender.com//${output}`,
       });
     } else {
       res.status(500).json({ message: "Unexpected output" });
