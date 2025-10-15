@@ -133,6 +133,8 @@ app.use("/uploads", express.static(uploadsDir));
 console.log("🗂 Serving uploads from:", uploadsDir);
 
 // ✅ Routes
+// Mount auth routes at both /api and /api/auth to keep backward compatibility
+app.use("/api", authRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/docs", docsRoutes);
 app.use("/api/upload", uploadRoutes);
@@ -145,8 +147,19 @@ app.use("/api/docai", docAIRoutes);
 // ✅ Root endpoint
 app.get("/", (req, res) => res.send("✅ Backend running"));
 
-// ✅ Start server
+// ✅ Start server only after DB is connected
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
-});
+const start = async () => {
+  try {
+    // connectDB already logs success or exits on failure
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on http://localhost:${PORT}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err.message || err);
+    process.exit(1);
+  }
+};
+
+start();

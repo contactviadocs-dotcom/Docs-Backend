@@ -13,7 +13,14 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (err) {
-    console.error("Auth error:", err);
+    // Handle expired tokens specifically so frontend can act accordingly
+    if (err && err.name === "TokenExpiredError") {
+      // don't leak full error object in prod logs
+      console.warn("Auth token expired at", err.expiredAt);
+      return res.status(401).json({ message: "Token expired", expiredAt: err.expiredAt });
+    }
+
+    console.error("Auth error:", err && err.message ? err.message : err);
     res.status(401).json({ message: "Unauthorized" });
   }
 };

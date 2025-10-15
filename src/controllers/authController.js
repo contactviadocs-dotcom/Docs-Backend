@@ -8,21 +8,33 @@ import { sendEmail } from "../utils/sendEmail.js";
 // Signup
 export const signup = async (req, res) => {
   try {
+    const debug = req.headers["x-debug"] === "1" || req.query.debug === "1";
+    const timers = {};
+    const now = () => Date.now();
+    timers.totalStart = now();
     const { username, firstName, lastName, email, password, dateOfBirth, gender } = req.body;
 
     // ✅ Check for duplicate username
-    const existingUsername = await User.findOne({ username });
+  timers.checkUsernameStart = now();
+  const existingUsername = await User.findOne({ username });
+  timers.checkUsernameEnd = now();
     if (existingUsername) {
+      console.timeEnd("signup-total");
       return res.status(400).json({ message: "Username already taken" });
     }
 
     // ✅ Check for duplicate email
-    const existingUser = await User.findOne({ email });
+  timers.checkEmailStart = now();
+  const existingUser = await User.findOne({ email });
+  timers.checkEmailEnd = now();
     if (existingUser) {
+      console.timeEnd("signup-total");
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+  timers.hashStart = now();
+  const hashedPassword = await bcrypt.hash(password, 10);
+  timers.hashEnd = now();
 
     const user = new User({
       username,
@@ -34,7 +46,9 @@ export const signup = async (req, res) => {
       gender,
     });
 
-    await user.save();
+  timers.saveStart = now();
+  await user.save();
+  timers.saveEnd = now();
 
     // ✅ Return JWT for auto login
     const token = jwt.sign(
@@ -43,6 +57,17 @@ export const signup = async (req, res) => {
       { expiresIn: "1d" }
     );
 
+    timers.totalEnd = now();
+    if (debug) {
+      const timings = {
+        checkUsername: timers.checkUsernameEnd - timers.checkUsernameStart,
+        checkEmail: timers.checkEmailEnd - timers.checkEmailStart,
+        hash: timers.hashEnd - timers.hashStart,
+        save: timers.saveEnd - timers.saveStart,
+        total: timers.totalEnd - timers.totalStart,
+      };
+      return res.status(201).json({ message: "User created successfully", token, timings });
+    }
     res.status(201).json({ message: "User created successfully", token });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -52,19 +77,40 @@ export const signup = async (req, res) => {
 // Login
 export const login = async (req, res) => {
   try {
+    const debug = req.headers["x-debug"] === "1" || req.query.debug === "1";
+    const timers = {};
+    const now = () => Date.now();
+    timers.totalStart = now();
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+  timers.findStart = now();
+  const user = await User.findOne({ email });
+  timers.findEnd = now();
     if (!user) return res.status(400).json({ message: "Invalid email or password" });
 
-    const isMatch = await bcrypt.compare(password, user.password);
+  timers.compareStart = now();
+  const isMatch = await bcrypt.compare(password, user.password);
+  timers.compareEnd = now();
     if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
+    timers.tokenStart = now();
     const token = jwt.sign(
       { id: user._id, email: user.email, username: user.username },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+    timers.tokenEnd = now();
+    timers.totalEnd = now();
+
+    if (debug) {
+      const timings = {
+        find: timers.findEnd - timers.findStart,
+        compare: timers.compareEnd - timers.compareStart,
+        token: timers.tokenEnd - timers.tokenStart,
+        total: timers.totalEnd - timers.totalStart,
+      };
+      return res.json({ token, timings });
+    }
 
     res.json({ token });
   } catch (err) {
